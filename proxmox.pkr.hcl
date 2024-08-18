@@ -33,7 +33,9 @@ source "qemu" "ubuntu-cloud" {
     ["-device", "usb-kbd"],
     ["-device", "usb-mouse"],
     ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"]
-  ] : []
+  ] : (source.name == "s390x" ? [
+  ["-boot", "order=c,once=d"]
+] : [])
 }
 
 build {
