@@ -22,12 +22,13 @@ source "qemu" "ubuntu-cloud" {
   accelerator       = "tcg"
   ssh_username      = "ubuntu"
   ssh_password      = "${var.ssh_password}"
-  ssh_timeout       = "30m"
-  ssh_handshake_attempts = "20"
+  ssh_timeout       = "40m"
+  ssh_handshake_attempts = "100"
+  ssh_wait_timeout  = "40m"
   vm_name           = "ubuntu-cloud-base-${source.name}"
   net_device        = "virtio-net"
   disk_interface    = "virtio"
-  boot_wait         = "2m"
+  boot_wait         = "5m"
   memory            = var.memory
   cpus              = var.cpu_count
   headless          = true
@@ -67,9 +68,15 @@ build {
   provisioner "shell" {
     inline = [
       "cloud-init status --wait",
+      "echo 'Cloud-init finished'",
+      "ip addr show",
+      "ss -tulpn",
+      "systemctl status ssh",
+      "cat /etc/ssh/sshd_config",
       "sudo apt-get update",
-      "sudo apt-get upgrade -y",
       "sudo apt-get install -y qemu-guest-agent cloud-init",
+      "sudo systemctl enable ssh",
+      "sudo systemctl start ssh",
       "sudo apt-get clean",
       "sudo rm -rf /var/lib/apt/lists/*"
     ]

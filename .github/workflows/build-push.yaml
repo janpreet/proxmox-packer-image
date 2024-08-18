@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180  # Increased to 3 hours
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -50,21 +50,27 @@ jobs:
 
     - name: Packer Init
       run: packer init .
-      env:
-        PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
-  
+
     - name: Packer Validate
       run: packer validate .
 
     - name: Packer Build
       env:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
       run: |
-        PACKER_LOG=1 packer build \
+        PACKER_LOG=1 PACKER_LOG_PATH="packer_log.txt" packer build \
+          -debug \
+          -on-error=abort \
           -var "arch=[\"${{ matrix.arch }}\"]" \
           -var "ssh_password=$SSH_PASSWORD" \
           .
+
+    - name: Upload Packer Log
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: packer-log-${{ matrix.arch }}
+        path: packer_log.txt
 
     - name: Generate OPA Input
       run: |
