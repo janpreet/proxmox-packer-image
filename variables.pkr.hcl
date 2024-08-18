@@ -4,7 +4,7 @@ variable "ubuntu_version" {
   description = "Ubuntu version to use for the image"
 }
 
-variable "architectures" {
+variable "arch" {
   type        = list(string)
   default     = ["amd64", "arm64", "s390x"]
   description = "List of architectures to build images for"

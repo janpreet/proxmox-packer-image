@@ -31,7 +31,7 @@ source "qemu" "ubuntu-cloud" {
 
 build {
   dynamic "source" {
-    for_each = var.architectures
+    for_each = var.arch
     labels   = ["qemu.ubuntu-cloud"]
     content {
       name = source.value
