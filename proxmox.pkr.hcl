@@ -7,18 +7,27 @@ packer {
   }
 }
 
+variable "ssh_password" {
+  type    = string
+  default = ""
+}
+
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
   iso_checksum      = "file:https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/SHA256SUMS"
   output_directory  = "output-${source.name}"
-  shutdown_command  = "echo 'packer' | sudo -S shutdown -P now"
+  shutdown_command  = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
   disk_size         = var.disk_size
   format            = "qcow2"
   accelerator       = "tcg"
   ssh_username      = "ubuntu"
-  ssh_password      = "ubuntu"
-  ssh_timeout       = "20m"
+  ssh_password      = "${var.ssh_password}"
+  ssh_timeout       = "30m"
+  ssh_handshake_attempts = "20"
   vm_name           = "ubuntu-cloud-base-${source.name}"
+  net_device        = "virtio-net"
+  disk_interface    = "virtio"
+  boot_wait         = "2m"
   memory            = var.memory
   cpus              = var.cpu_count
   headless          = true
@@ -33,8 +42,17 @@ source "qemu" "ubuntu-cloud" {
     ["-device", "usb-kbd"],
     ["-device", "usb-mouse"],
     ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
-    ["-boot", "c"]
-  ] : []
+    ["-boot", "c"],
+    ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
+    ["-device", "virtio-net,netdev=user.0"]
+  ] : [
+    ["-cpu", "host"],
+    ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
+    ["-device", "virtio-net,netdev=user.0"]
+  ]
+  http_directory    = "http"
+  cd_files          = ["./http/user-data", "./http/meta-data"]
+  cd_label          = "cidata"
 }
 
 build {
@@ -48,6 +66,7 @@ build {
 
   provisioner "shell" {
     inline = [
+      "cloud-init status --wait",
       "sudo apt-get update",
       "sudo apt-get upgrade -y",
       "sudo apt-get install -y qemu-guest-agent cloud-init",

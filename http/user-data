@@ -1,0 +1,11 @@
+#cloud-config
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    passwd: ${ssh_password}
+    lock_passwd: false
+ssh_pwauth: true
+
+runcmd:
+  - sed -i 's/\${ssh_password}/'"$SSH_PASSWORD"'/' /etc/cloud/cloud.cfg.d/99_passwd.cfg

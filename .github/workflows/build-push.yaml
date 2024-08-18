@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -54,7 +55,13 @@ jobs:
       run: packer validate .
 
     - name: Packer Build
-      run: PACKER_LOG=1 packer build -var 'arch=["${{ matrix.arch }}"]' .
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      run: |
+        PACKER_LOG=1 packer build \
+          -var "arch=[\"${{ matrix.arch }}\"]" \
+          -var "ssh_password=$SSH_PASSWORD" \
+          .
 
     - name: Generate OPA Input
       run: |
