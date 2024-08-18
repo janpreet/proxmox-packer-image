@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180  # Increased to 3 hours
+    timeout-minutes: 180
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -34,25 +34,25 @@ jobs:
         sudo apt-get install -y qemu-efi-aarch64
         sudo apt-get install -y cloud-image-utils
 
-    - name: Verify QEMU installations
+    - name: Create custom user-data
       run: |
-        qemu-system-x86_64 --version
-        qemu-system-aarch64 --version
-
-    - name: Verify QEMU EFI file for ARM64
-      run: |
-        if [ -f "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd" ]; then
-          echo "QEMU EFI file for ARM64 exists."
-        else
-          echo "QEMU EFI file for ARM64 is missing!"
-          exit 1
-        fi
-
-    - name: Packer Init
-      run: packer init .
-
-    - name: Packer Validate
-      run: packer validate .
+        cat <<EOT > user-data
+        #cloud-config
+        users:
+          - name: ubuntu
+            sudo: ALL=(ALL) NOPASSWD:ALL
+            shell: /bin/bash
+            lock_passwd: false
+        ssh_pwauth: true
+        chpasswd:
+          list: |
+            ubuntu:${{ secrets.SSH_PASSWORD }}
+          expire: false
+        runcmd:
+          - sed -i 's/^#*\s*PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+          - sed -i 's/^#*\s*PasswordAuthentication\s+.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          - systemctl restart sshd
+        EOT
 
     - name: Packer Build
       env:
