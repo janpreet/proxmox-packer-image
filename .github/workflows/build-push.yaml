@@ -19,7 +19,7 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@main
       with:
-        version: '1.9.1'  # Updated to latest stable version
+        version: '1.9.1'
 
     - name: Setup OPA
       uses: open-policy-agent/setup-opa@v2
@@ -29,7 +29,25 @@ jobs:
     - name: Install QEMU and other dependencies
       run: |
         sudo apt-get update
-            sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-efi-aarch64 qemu-system-s390x
+        sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-utils
+        sudo apt-get install -y qemu-efi-aarch64
+        sudo apt-get install -y qemu-system-s390x
+        sudo apt-get install -y cloud-image-utils
+
+    - name: Verify QEMU installations
+      run: |
+        qemu-system-x86_64 --version
+        qemu-system-aarch64 --version
+        qemu-system-s390x --version
+
+    - name: Verify QEMU EFI file for ARM64
+      run: |
+        if [ -f "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd" ]; then
+          echo "QEMU EFI file for ARM64 exists."
+        else
+          echo "QEMU EFI file for ARM64 is missing!"
+          exit 1
+        fi
 
     - name: Packer Init
       run: packer init .

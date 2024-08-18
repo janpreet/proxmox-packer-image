@@ -14,7 +14,7 @@ source "qemu" "ubuntu-cloud" {
   shutdown_command  = "echo 'packer' | sudo -S shutdown -P now"
   disk_size         = var.disk_size
   format            = "qcow2"
-  accelerator       = "tcg"  # Changed from "kvm" to "tcg"
+  accelerator       = "tcg"
   ssh_username      = "ubuntu"
   ssh_password      = "ubuntu"
   ssh_timeout       = "20m"
@@ -32,10 +32,11 @@ source "qemu" "ubuntu-cloud" {
     ["-device", "qemu-xhci"],
     ["-device", "usb-kbd"],
     ["-device", "usb-mouse"],
-    ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"]
+    ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
+    ["-boot", "c"]
   ] : (source.name == "s390x" ? [
-  ["-boot", "order=c,once=d"]
-] : [])
+    ["-boot", "order=c,once=d"]
+  ] : [])
 }
 
 build {
