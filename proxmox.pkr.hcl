@@ -7,11 +7,6 @@ packer {
   }
 }
 
-variable "ssh_password" {
-  type    = string
-  default = ""
-}
-
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
   iso_checksum      = var.image_checksums[source.name]
