@@ -1,3 +1,4 @@
+
 packer {
   required_plugins {
     qemu = {
@@ -5,6 +6,11 @@ packer {
       source  = "github.com/hashicorp/qemu"
     }
   }
+}
+
+variable "ssh_password" {
+  type    = string
+  default = ""
 }
 
 source "qemu" "ubuntu-cloud" {
@@ -17,11 +23,11 @@ source "qemu" "ubuntu-cloud" {
   accelerator       = "tcg"
   ssh_username      = "ubuntu"
   ssh_password      = "${var.ssh_password}"
-  ssh_timeout       = "20m"
+  ssh_timeout       = "30m"
   vm_name           = "ubuntu-cloud-base-amd64"
   net_device        = "virtio-net"
   disk_interface    = "virtio"
-  boot_wait         = "10s"
+  boot_wait         = "2m"
   memory            = var.memory
   cpus              = var.cpu_count
   headless          = true
@@ -30,8 +36,36 @@ source "qemu" "ubuntu-cloud" {
     ["-smp", "${var.cpu_count}"],
     ["-m", "${var.memory}M"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
-    ["-device", "virtio-net,netdev=user.0"]
+    ["-device", "virtio-net,netdev=user.0"],
+    ["-drive", "file=cloud-init.img,format=raw,if=virtio"],
+    ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
   ]
+  http_content = {
+    "/meta-data" = jsonencode({
+      "instance-id"    = "packer-qemu-${var.ubuntu_version}"
+      "local-hostname" = "ubuntu-cloud"
+    })
+    "/user-data" = yamlencode({
+      "users" = [
+        {
+          "name"                = "ubuntu"
+          "passwd"              = "${var.ssh_password}"
+          "lock_passwd"         = false
+          "ssh_pwauth"          = true
+          "sudo"                = "ALL=(ALL) NOPASSWD:ALL"
+        }
+      ]
+      "ssh_pwauth" = true
+      "chpasswd" = {
+        "expire" = false
+      }
+      "bootcmd" = [
+        "sed -i 's/^#*\\s*PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config",
+        "sed -i 's/^#*\\s*PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config",
+        "systemctl restart sshd"
+      ]
+    })
+  }
 }
 
 build {
@@ -44,7 +78,6 @@ build {
       "sudo apt-get update",
       "sudo apt-get install -y qemu-guest-agent",
       "sudo apt-get clean",
-      "echo 'ubuntu:${var.ssh_password}' | sudo chpasswd",
       "echo 'Image built successfully'"
     ]
   }
@@ -55,13 +88,8 @@ build {
       "sudo chmod 644 /etc/janpreet_signature"
     ]
   }
-
+  
   post-processor "compress" {
     output = "output-amd64/ubuntu-cloud-base-${var.ubuntu_version}-amd64.qcow2.gz"
-  }
-
-  post-processor "manifest" {
-    output     = "manifest.json"
-    strip_path = true
   }
 }

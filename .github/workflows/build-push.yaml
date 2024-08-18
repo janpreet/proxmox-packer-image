@@ -33,6 +33,17 @@ jobs:
     - name: Verify QEMU installation
       run: qemu-system-x86_64 --version
 
+    - name: Create cloud-init image
+      run: |
+        cat << EOF > cloud-init-data
+        #cloud-config
+        users:
+          - name: ubuntu
+            sudo: ALL=(ALL) NOPASSWD:ALL
+            shell: /bin/bash
+        EOF
+        cloud-localds cloud-init.img cloud-init-data
+
     - name: Packer Init
       run: packer init .
       env:
