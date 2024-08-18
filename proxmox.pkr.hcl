@@ -8,9 +8,9 @@ packer {
 }
 
 source "qemu" "ubuntu-cloud" {
-  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${var.current_arch}.img"
-  iso_checksum      = "${var.image_checksums[var.current_arch]}"
-  output_directory  = "output-${var.current_arch}"
+  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-amd64.img"
+  iso_checksum      = "${var.image_checksums["amd64"]}"
+  output_directory  = "output-amd64"
   shutdown_command  = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
   disk_size         = "${var.disk_size}"
   format            = "qcow2"
@@ -18,25 +18,15 @@ source "qemu" "ubuntu-cloud" {
   ssh_username      = "ubuntu"
   ssh_password      = "${var.ssh_password}"
   ssh_timeout       = "20m"
-  vm_name           = "ubuntu-cloud-base-${var.current_arch}"
+  vm_name           = "ubuntu-cloud-base-amd64"
   net_device        = "virtio-net"
   disk_interface    = "virtio"
   boot_wait         = "10s"
   memory            = var.memory
   cpus              = var.cpu_count
   headless          = true
-  qemu_binary       = var.current_arch == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
-  machine_type      = var.current_arch == "arm64" ? "virt" : "pc"
-  qemuargs = var.current_arch == "arm64" ? [
-    ["-cpu", "cortex-a57"],
-    ["-machine", "virt"],
-    ["-smp", "${var.cpu_count}"],
-    ["-m", "${var.memory}M"],
-    ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
-    ["-device", "virtio-net-pci,netdev=user.0"],
-    ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd,size=64M"],
-    ["-drive", "if=pflash,format=raw,file=QEMU_VARS.fd,size=64M"]
-  ] : [
+  qemu_binary       = "qemu-system-x86_64"
+  qemuargs          = [
     ["-smp", "${var.cpu_count}"],
     ["-m", "${var.memory}M"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
@@ -67,7 +57,7 @@ build {
   }
 
   post-processor "compress" {
-    output = "output-${source.name}/ubuntu-cloud-base-${var.ubuntu_version}-${source.name}.qcow2.gz"
+    output = "output-amd64/ubuntu-cloud-base-${var.ubuntu_version}-amd64.qcow2.gz"
   }
 
   post-processor "manifest" {
