@@ -27,6 +27,7 @@ source "qemu" "ubuntu-cloud" {
   qemuargs          = [
     ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
   ]
+  qemu_binary       = source.name == "s390x" ? "qemu-system-s390x" : "qemu-system-x86_64"
 }
 
 build {
