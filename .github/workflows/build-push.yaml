@@ -26,9 +26,8 @@ jobs:
       with:
         version: latest
 
-    - name: Install latest QEMU
+    - name: Install QEMU and dependencies
       run: |
-        sudo add-apt-repository ppa:jacob/virtualisation
         sudo apt-get update
         sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-system-s390x qemu-utils
         sudo apt-get install -y qemu-efi-aarch64
