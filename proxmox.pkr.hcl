@@ -7,21 +7,6 @@ packer {
   }
 }
 
-variable "ubuntu_version" {
-  type    = string
-  default = "focal"
-}
-
-variable "architectures" {
-  type    = list(string)
-  default = ["amd64", "arm64", "s390x"]
-}
-
-variable "author_name" {
-  type    = string
-  default = "Janpreet Singh"
-}
-
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
   iso_checksum      = "file:https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/SHA256SUMS"
