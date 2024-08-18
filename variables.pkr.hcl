@@ -10,6 +10,11 @@ variable "author_name" {
   description = "Name of the image author"
 }
 
+variable "ssh_password" {
+  type    = string
+  default = ""
+}
+
 variable "cpu_count" {
   type        = number
   default     = 2
