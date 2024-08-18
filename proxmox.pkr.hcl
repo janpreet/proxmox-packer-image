@@ -23,8 +23,8 @@ source "qemu" "ubuntu-cloud" {
   cpus              = var.cpu_count
   headless          = true
   use_default_display = true
-  qemu_binary       = source.name == "s390x" ? "qemu-system-s390x" : (source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64")
-  machine_type      = source.name == "s390x" ? "s390-ccw-virtio" : (source.name == "arm64" ? "virt" : "q35")
+  qemu_binary       = source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
+  machine_type      = source.name == "arm64" ? "virt" : "q35"
   qemuargs = source.name == "arm64" ? [
     ["-cpu", "cortex-a57"],
     ["-machine", "virt"],
@@ -34,15 +34,7 @@ source "qemu" "ubuntu-cloud" {
     ["-device", "usb-mouse"],
     ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
     ["-boot", "c"]
-  ] : (source.name == "s390x" ? [
-    ["-machine", "s390-ccw-virtio"],
-    ["-cpu", "max,zpci=on"],
-    ["-device", "virtio-net-ccw,netdev=net0"],
-    ["-netdev", "user,id=net0"],
-    ["-device", "virtio-scsi-ccw"],
-    ["-device", "scsi-hd,drive=hd0"],
-    ["-drive", "if=none,file=${var.ubuntu_version}-server-cloudimg-${source.name}.img,id=hd0,format=qcow2"]
-  ] : [])
+  ] : []
 }
 
 build {
