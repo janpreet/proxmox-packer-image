@@ -25,6 +25,11 @@ source "qemu" "ubuntu-cloud" {
   use_default_display = true
   qemu_binary       = source.name == "s390x" ? "qemu-system-s390x" : (source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64")
   machine_type      = source.name == "s390x" ? "s390-ccw-virtio" : (source.name == "arm64" ? "virt" : "q35")
+  qemuargs = source.name == "arm64" ? [
+    ["-cpu", "cortex-a57"],
+    ["-machine", "virt"],
+    ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"]
+  ] : []
 }
 
 build {
