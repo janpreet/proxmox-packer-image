@@ -7,12 +7,17 @@ packer {
   }
 }
 
+variable "ssh_password" {
+  type    = string
+  default = ""
+}
+
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
-  iso_checksum      = "file:https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/SHA256SUMS"
+  iso_checksum      = var.image_checksums[source.name]
   output_directory  = "output-${source.name}"
   shutdown_command  = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
-  disk_size         = "5G"
+  disk_size         = "${var.disk_size}"
   format            = "qcow2"
   accelerator       = "tcg"
   ssh_username      = "ubuntu"
@@ -22,12 +27,12 @@ source "qemu" "ubuntu-cloud" {
   net_device        = "virtio-net"
   disk_interface    = "virtio"
   boot_wait         = "10s"
-  memory            = 1024
-  cpus              = 2
+  memory            = var.memory
+  cpus              = var.cpu_count
   headless          = true
   qemu_binary       = source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
   qemuargs          = [
-    ["-smp", "2"],
+    ["-smp", "${var.cpu_count}"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net,netdev=user.0"]
   ]
@@ -48,7 +53,19 @@ build {
     ]
   }
 
+  provisioner "shell" {
+    inline = [
+      "echo 'This image was created by ${var.author_name}' | sudo tee /etc/janpreet_signature",
+      "sudo chmod 644 /etc/janpreet_signature"
+    ]
+  }
+
   post-processor "compress" {
     output = "output-${source.name}/ubuntu-cloud-base-${var.ubuntu_version}-${source.name}.qcow2.gz"
+  }
+
+  post-processor "manifest" {
+    output     = "manifest.json"
+    strip_path = true
   }
 }

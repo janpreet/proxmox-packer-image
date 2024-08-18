@@ -38,3 +38,12 @@ variable "ssh_password" {
   type    = string
   default = ""
 }
+
+variable "image_checksums" {
+  type = map(string)
+  default = {
+    amd64 = "sha256:0e543a63dac825dd89833d243aa70f903bc0b15b17f4a6d6b143df5031e18cfb"
+    arm64 = "sha256:ba37e1cf77b5ca0b9c39f7ed8191e5fb26257802ab4f065f468d06ab93c4af42"
+  }
+  description = "SHA256 checksums for different architecture images"
+}
