@@ -9,7 +9,7 @@ packer {
 
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${var.current_arch}.img"
-  iso_checksum      = var.image_checksums[var.current_arch]
+  iso_checksum      = "${var.image_checksums[var.current_arch]}"
   output_directory  = "output-${var.current_arch}"
   shutdown_command  = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
   disk_size         = "${var.disk_size}"
