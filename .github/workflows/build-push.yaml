@@ -1,0 +1,101 @@
+name: Build, Test, and Push Multi-arch Ubuntu Cloud Image
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64, s390x]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Packer
+      uses: hashicorp/setup-packer@main
+      with:
+        version: '1.8.1'
+
+    - name: Setup OPA
+      uses: open-policy-agent/setup-opa@v2
+      with:
+        version: latest
+
+    - name: Packer Init
+      run: packer init .
+
+    - name: Packer Validate
+      run: packer validate .
+
+    - name: Packer Build
+      run: packer build -var "arch=${{ matrix.arch }}" .
+
+    - name: Generate OPA Input
+      run: |
+        sudo apt-get update && sudo apt-get install -y libguestfs-tools
+        chmod +x scripts/generate_opa_input.sh
+        ./scripts/generate_opa_input.sh output-${{ matrix.arch }}/ubuntu-cloud-base-focal-${{ matrix.arch }}.qcow2 > opa_input.json
+
+    - name: Run OPA Tests
+      run: |
+        opa eval --format pretty --data policies/image_security.rego --input opa_input.json "data.image_security.allow"
+        if [ $? -ne 0 ]; then
+          echo "OPA tests failed. Image does not meet security requirements."
+          exit 1
+        fi
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1 
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push to GitHub Packages
+      run: |
+        gzip -dc output-${{ matrix.arch }}/ubuntu-cloud-base-focal-${{ matrix.arch }}.qcow2.gz > ubuntu-cloud-base-${{ matrix.arch }}.qcow2
+        docker import ubuntu-cloud-base-${{ matrix.arch }}.qcow2 ghcr.io/${{ github.repository_owner }}/ubuntu-cloud-base-${{ matrix.arch }}:latest
+        docker push ghcr.io/${{ github.repository_owner }}/ubuntu-cloud-base-${{ matrix.arch }}:latest
+        docker tag ghcr.io/${{ github.repository_owner }}/ubuntu-cloud-base-${{ matrix.arch }}:latest ghcr.io/${{ github.repository_owner }}/ubuntu-cloud-base-${{ matrix.arch }}:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository_owner }}/ubuntu-cloud-base-${{ matrix.arch }}:${{ github.sha }}
+
+    - name: Upload QCOW2 image
+      uses: actions/upload-artifact@v2
+      with:
+        name: ubuntu-cloud-base-${{ matrix.arch }}.qcow2.gz
+        path: output-${{ matrix.arch }}/ubuntu-cloud-base-focal-${{ matrix.arch }}.qcow2.gz
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Download all workflow run artifacts
+      uses: actions/download-artifact@v2
+
+    - name: Upload Release Assets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        for file in ubuntu-cloud-base-*/ubuntu-cloud-base-focal-*.qcow2.gz; do
+          arch=$(echo $file | cut -d'-' -f4 | cut -d'.' -f1)
+          asset_name="ubuntu-cloud-base-focal-${arch}.qcow2.gz"
+          curl -H "Authorization: token $GITHUB_TOKEN" \
+               -H "Content-Type: application/gzip" \
+               --data-binary @"$file" \
+               "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=${asset_name}"
+        done
