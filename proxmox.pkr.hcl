@@ -15,7 +15,6 @@ source "qemu" "ubuntu-cloud" {
   disk_size         = var.disk_size
   format            = "qcow2"
   accelerator       = "kvm"
-  http_directory    = "http"
   ssh_username      = "ubuntu"
   ssh_password      = "ubuntu"
   ssh_timeout       = "20m"
@@ -24,10 +23,9 @@ source "qemu" "ubuntu-cloud" {
   cpus              = var.cpu_count
   headless          = true
   use_default_display = true
-  qemuargs          = [
-    ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
-  ]
-  qemu_binary       = source.name == "s390x" ? "qemu-system-s390x" : "qemu-system-x86_64"
+  qemu_binary       = source.name == "s390x" ? "qemu-system-s390x" : (source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64")
+  machine_type      = source.name == "s390x" ? "s390-ccw-virtio" : (source.name == "arm64" ? "virt" : "q35")
+  cpu_type          = source.name == "s390x" ? "host" : (source.name == "arm64" ? "cortex-a57" : "host")
 }
 
 build {
