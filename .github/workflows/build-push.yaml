@@ -1,4 +1,4 @@
-name: Build, Test, and Push Multi-arch Ubuntu Cloud Image
+name: Build Ubuntu Cloud Image
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -22,42 +21,22 @@ jobs:
       with:
         version: '1.9.1'
 
-    - name: Setup OPA
-      uses: open-policy-agent/setup-opa@v2
-      with:
-        version: latest
-
-    - name: Install QEMU and dependencies
+    - name: Install QEMU
       run: |
         sudo apt-get update
         sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-utils
-        sudo apt-get install -y qemu-efi-aarch64
-        sudo apt-get install -y cloud-image-utils
 
-    - name: Create custom user-data
+    - name: Debug Environment
       run: |
-        cat <<EOT > user-data
-        #cloud-config
-        users:
-          - name: ubuntu
-            sudo: ALL=(ALL) NOPASSWD:ALL
-            shell: /bin/bash
-            lock_passwd: false
-        ssh_pwauth: true
-        chpasswd:
-          list: |
-            ubuntu:${{ secrets.SSH_PASSWORD }}
-          expire: false
-        runcmd:
-          - sed -i 's/^#*\s*PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config
-          - sed -i 's/^#*\s*PasswordAuthentication\s+.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          - systemctl restart sshd
-        EOT
+        qemu-system-x86_64 --version
+        qemu-system-aarch64 --version
+        ls -l /usr/bin/qemu*
+        lscpu
+        free -h
+        df -h
 
     - name: Packer Init
-      run: |
-        packer init .
-        packer plugins installed
+      run: packer init .
 
     - name: Packer Validate
       run: packer validate .
@@ -69,7 +48,7 @@ jobs:
         PACKER_LOG=1 PACKER_LOG_PATH="packer_log.txt" packer build \
           -debug \
           -on-error=abort \
-          -var "arch=[\"${{ matrix.arch }}\"]" \
+          -var "arch=${{ matrix.arch }}" \
           -var "ssh_password=$SSH_PASSWORD" \
           .
 
