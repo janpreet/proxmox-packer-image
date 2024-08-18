@@ -47,3 +47,9 @@ variable "image_checksums" {
   }
   description = "SHA256 checksums for different architecture images"
 }
+
+variable "current_arch" {
+  type        = string
+  default     = "amd64"
+  description = "Current architecture to build (amd64 or arm64)"
+}

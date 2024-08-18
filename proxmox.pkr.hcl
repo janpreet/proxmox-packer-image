@@ -8,9 +8,9 @@ packer {
 }
 
 source "qemu" "ubuntu-cloud" {
-  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
-  iso_checksum      = var.image_checksums[source.name]
-  output_directory  = "output-${source.name}"
+  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${var.current_arch}.img"
+  iso_checksum      = var.image_checksums[var.current_arch]
+  output_directory  = "output-${var.current_arch}"
   shutdown_command  = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
   disk_size         = "${var.disk_size}"
   format            = "qcow2"
@@ -18,14 +18,14 @@ source "qemu" "ubuntu-cloud" {
   ssh_username      = "ubuntu"
   ssh_password      = "${var.ssh_password}"
   ssh_timeout       = "20m"
-  vm_name           = "ubuntu-cloud-base-${source.name}"
+  vm_name           = "ubuntu-cloud-base-${var.current_arch}"
   net_device        = "virtio-net"
   disk_interface    = "virtio"
   boot_wait         = "10s"
   memory            = var.memory
   cpus              = var.cpu_count
   headless          = true
-  qemu_binary       = source.name == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
+  qemu_binary       = var.current_arch == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
   qemuargs          = [
     ["-smp", "${var.cpu_count}"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
