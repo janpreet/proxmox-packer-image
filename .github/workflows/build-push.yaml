@@ -39,10 +39,12 @@ jobs:
         qemu-system-x86_64 --version
         qemu-system-aarch64 --version
 
-    - name: Verify QEMU EFI file for ARM64
+    - name: Prepare UEFI firmware for ARM64
+      if: matrix.arch == 'arm64'
       run: |
         if [ -f "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd" ]; then
           echo "QEMU EFI file for ARM64 exists."
+          dd if=/dev/zero of=QEMU_VARS.fd bs=1M count=64
         else
           echo "QEMU EFI file for ARM64 is missing!"
           exit 1

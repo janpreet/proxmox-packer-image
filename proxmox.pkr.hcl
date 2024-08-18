@@ -31,11 +31,14 @@ source "qemu" "ubuntu-cloud" {
     ["-cpu", "cortex-a57"],
     ["-machine", "virt"],
     ["-smp", "${var.cpu_count}"],
+    ["-m", "${var.memory}M"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net-pci,netdev=user.0"],
-    ["-drive", "file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd,if=pflash,format=raw,readonly=on"]
+    ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
+    ["-drive", "if=pflash,format=raw,file=QEMU_VARS.fd,size=64M"]
   ] : [
     ["-smp", "${var.cpu_count}"],
+    ["-m", "${var.memory}M"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net,netdev=user.0"]
   ]
