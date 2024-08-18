@@ -35,7 +35,13 @@ source "qemu" "ubuntu-cloud" {
     ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
     ["-boot", "c"]
   ] : (source.name == "s390x" ? [
-    ["-boot", "order=c,once=d"]
+    ["-machine", "s390-ccw-virtio"],
+    ["-cpu", "max,zpci=on"],
+    ["-device", "virtio-net-ccw,netdev=net0"],
+    ["-netdev", "user,id=net0"],
+    ["-device", "virtio-scsi-ccw"],
+    ["-device", "scsi-hd,drive=hd0"],
+    ["-drive", "if=none,file=${var.ubuntu_version}-server-cloudimg-${source.name}.img,id=hd0,format=qcow2"]
   ] : [])
 }
 
