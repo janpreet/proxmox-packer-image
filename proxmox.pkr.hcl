@@ -26,7 +26,15 @@ source "qemu" "ubuntu-cloud" {
   cpus              = var.cpu_count
   headless          = true
   qemu_binary       = var.current_arch == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
-  qemuargs          = [
+  machine_type      = var.current_arch == "arm64" ? "virt" : "pc"
+  qemuargs = var.current_arch == "arm64" ? [
+    ["-cpu", "cortex-a57"],
+    ["-machine", "virt"],
+    ["-smp", "${var.cpu_count}"],
+    ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
+    ["-device", "virtio-net-pci,netdev=user.0"],
+    ["-drive", "file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd,if=pflash,format=raw,readonly=on"]
+  ] : [
     ["-smp", "${var.cpu_count}"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net,netdev=user.0"]
