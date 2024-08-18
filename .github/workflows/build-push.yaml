@@ -54,6 +54,14 @@ jobs:
           - systemctl restart sshd
         EOT
 
+    - name: Packer Init
+      run: |
+        packer init .
+        packer plugins installed
+
+    - name: Packer Validate
+      run: packer validate .
+
     - name: Packer Build
       env:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
