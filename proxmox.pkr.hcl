@@ -14,7 +14,7 @@ source "qemu" "ubuntu-cloud" {
   shutdown_command  = "echo 'packer' | sudo -S shutdown -P now"
   disk_size         = var.disk_size
   format            = "qcow2"
-  accelerator       = "kvm"
+  accelerator       = "tcg"  # Changed from "kvm" to "tcg"
   ssh_username      = "ubuntu"
   ssh_password      = "ubuntu"
   ssh_timeout       = "20m"
@@ -28,6 +28,10 @@ source "qemu" "ubuntu-cloud" {
   qemuargs = source.name == "arm64" ? [
     ["-cpu", "cortex-a57"],
     ["-machine", "virt"],
+    ["-device", "virtio-gpu-pci"],
+    ["-device", "qemu-xhci"],
+    ["-device", "usb-kbd"],
+    ["-device", "usb-mouse"],
     ["-bios", "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"]
   ] : []
 }

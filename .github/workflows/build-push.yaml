@@ -29,7 +29,7 @@ jobs:
     - name: Install QEMU and other dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-system-s390x libguestfs-tools
+            sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-efi-aarch64 qemu-system-s390x
 
     - name: Packer Init
       run: packer init .
