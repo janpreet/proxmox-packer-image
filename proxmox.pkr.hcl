@@ -34,7 +34,7 @@ source "qemu" "ubuntu-cloud" {
     ["-m", "${var.memory}M"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net-pci,netdev=user.0"],
-    ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"],
+    ["-drive", "if=pflash,format=raw,readonly=on,file=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd,size=64M"],
     ["-drive", "if=pflash,format=raw,file=QEMU_VARS.fd,size=64M"]
   ] : [
     ["-smp", "${var.cpu_count}"],
