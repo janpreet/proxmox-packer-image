@@ -8,11 +8,6 @@ packer {
   }
 }
 
-variable "ssh_password" {
-  type    = string
-  default = ""
-}
-
 source "qemu" "ubuntu-cloud" {
   iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-amd64.img"
   iso_checksum      = "${var.image_checksums["amd64"]}"
@@ -88,7 +83,7 @@ build {
       "sudo chmod 644 /etc/janpreet_signature"
     ]
   }
-  
+
   post-processor "compress" {
     output = "output-amd64/ubuntu-cloud-base-${var.ubuntu_version}-amd64.qcow2.gz"
   }
