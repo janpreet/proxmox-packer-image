@@ -1,3 +1,21 @@
+variable "ubuntu_version" {
+  type        = string
+  default     = "focal"
+  description = "Ubuntu version to use for the image"
+}
+
+variable "architectures" {
+  type        = list(string)
+  default     = ["amd64", "arm64", "s390x"]
+  description = "List of architectures to build images for"
+}
+
+variable "author_name" {
+  type        = string
+  default     = "Janpreet Singh"
+  description = "Name of the image author"
+}
+
 variable "cpu_count" {
   type        = number
   default     = 2
@@ -12,6 +30,6 @@ variable "memory" {
 
 variable "disk_size" {
   type        = string
-  default     = "2G"
+  default     = "5G"
   description = "The size of the disk to create"
 }

@@ -22,22 +22,21 @@ variable "author_name" {
   default = "Janpreet Singh"
 }
 
-
 source "qemu" "ubuntu-cloud" {
-  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${var.arch}.img"
+  iso_url           = "https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/${var.ubuntu_version}-server-cloudimg-${source.name}.img"
   iso_checksum      = "file:https://cloud-images.ubuntu.com/${var.ubuntu_version}/current/SHA256SUMS"
-  output_directory  = "output-${var.arch}"
+  output_directory  = "output-${source.name}"
   shutdown_command  = "echo 'packer' | sudo -S shutdown -P now"
-  disk_size         = "5G"
+  disk_size         = var.disk_size
   format            = "qcow2"
   accelerator       = "kvm"
   http_directory    = "http"
   ssh_username      = "ubuntu"
   ssh_password      = "ubuntu"
   ssh_timeout       = "20m"
-  vm_name           = "ubuntu-cloud-base-${var.arch}"
-  memory            = "1024"
-  cpus              = "2"
+  vm_name           = "ubuntu-cloud-base-${source.name}"
+  memory            = var.memory
+  cpus              = var.cpu_count
   headless          = true
   use_default_display = true
   qemuargs          = [
@@ -51,7 +50,6 @@ build {
     labels   = ["qemu.ubuntu-cloud"]
     content {
       name = source.value
-      arch = source.value
     }
   }
 
