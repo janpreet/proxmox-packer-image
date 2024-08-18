@@ -46,7 +46,7 @@ source "qemu" "ubuntu-cloud" {
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net,netdev=user.0"]
   ] : [
-    ["-cpu", "host"],
+    ["-cpu", "qemu64"],
     ["-netdev", "user,id=user.0,hostfwd=tcp::{{ .SSHHostPort }}-:22"],
     ["-device", "virtio-net,netdev=user.0"]
   ]
