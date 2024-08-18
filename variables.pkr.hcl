@@ -33,3 +33,8 @@ variable "disk_size" {
   default     = "5G"
   description = "The size of the disk to create"
 }
+
+variable "ssh_password" {
+  type    = string
+  default = ""
+}
