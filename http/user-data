@@ -1,9 +1,8 @@
-#cloud-config
 users:
   - name: ubuntu
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
-    passwd: ${ssh_password}
+    passwd: __REPLACE_PASSWORD__
     lock_passwd: false
 ssh_pwauth: true
 
@@ -23,5 +22,7 @@ write_files:
       Subsystem sftp /usr/lib/openssh/sftp-server
 
 runcmd:
-  - sed -i 's/\${ssh_password}/'"$SSH_PASSWORD"'/' /etc/cloud/cloud.cfg.d/99_passwd.cfg
+  - sed -i 's/__REPLACE_PASSWORD__/'"$SSH_PASSWORD"'/' /etc/cloud/cloud.cfg.d/99_passwd.cfg
   - systemctl restart ssh
+  - echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu
+  - chmod 0440 /etc/sudoers.d/ubuntu

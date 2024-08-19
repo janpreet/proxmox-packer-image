@@ -52,6 +52,13 @@ jobs:
     - name: Packer Validate
       run: packer validate .
 
+    - name: Prepare cloud-init data
+      run: |
+        sed "s/__REPLACE_PASSWORD__/${{ secrets.SSH_PASSWORD }}/g" http/user-data > user-data.tmp
+        cloud-localds cloud-init.img user-data.tmp http/meta-data
+      env:
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+
     - name: Packer Build
       env:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
